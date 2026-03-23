@@ -48,8 +48,8 @@ from datetime import date, datetime
 #     print('Valid File Name')
 
 class ingestion_manager:
-    def is_valid(self, orgfilepath, validfilepath):
-        status = 'Success'
+    def is_valid(self, orgfilepath, validfilepath): # .csv filepath along with its json filepath is collected 
+        status = 'Success' # defined for logging argument
         ingestionpath = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\data\ingestion'
         
         df = pd.read_csv(orgfilepath)
@@ -61,17 +61,16 @@ class ingestion_manager:
         print(f"Validating file - {filename}\n")
         
         valid_extension = metadata['expected_extension'][0]
-        valid_file_name = metadata['file_name']
-        prefix = valid_file_name[0].split('_')[0]
+        valid_filename = metadata['file_name'][0]
         
-        pattern = rf"^{prefix}_\d{{8}}$"
-        
-        if not re.match(pattern,name) or extension != valid_extension or df.shape[0] != metadata['expected_rows'][0] or set(metadata['expected_columns']) != set(df.columns):
+        # checking all the condition for validating .csv file in reference to its json file
+        if filename != valid_filename or extension != valid_extension or df.shape[0] != metadata['expected_rows'][0] or set(metadata['expected_columns']) != set(df.columns):
             print(f'Invalid File: {filename}\n Filepath: {orgfilepath}\n')
             status = 'Failed'
         else:
-            df.to_csv(os.path.join(ingestionpath, filename), index=False)
+            df.to_csv(os.path.join(ingestionpath, filename), index=False) # storing file from source_files to ingestion folder if valid.
             print(f'Valid File: {filename}\n Filepath: {orgfilepath}\n')
         
         logger = audit_logger()
+        #log the files which are valid or invalid.
         logger.log_ingestion(filename , status , df.shape[0], metadata['expected_rows'][0])

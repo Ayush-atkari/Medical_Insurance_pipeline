@@ -7,8 +7,29 @@ import pyarrow.parquet as pq
 from audit_logger import audit_logger
 
 
+logger = audit_logger()
 
-
+class preprocessing_engine:# ingestion folder files are collected one by one and preproccessed
+    def preprocess_file(self,ingestionpath): 
+        df = pd.read_csv(ingestionpath)
+        df.drop_duplicates(inplace = True) # duplicates dropped if any
+        filename = ingestionpath.split('\\')[-1] # splitted by / and filename is extracted
+        
+        print(f"Preprocessing file - {filename}\n")
+        
+        datestring = filename.split('_')[1].split('.')[0] # filedate is extracted using .split
+        file_date = datetime.strptime(datestring,'%Y%m%d').date() #filedate is formatted in date datatype
+        system_date = date.today() 
+        df['ingestion_date'] = system_date
+        df['file_date'] = file_date
+        preprocessedPath = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\data\preprocessed'
+        updated_preprocessedPath = os.path.join(preprocessedPath, filename.split('.')[0]) + '.parquet'
+        df.to_parquet(updated_preprocessedPath, index=False) # file uploaded as .parquet into preprocessed folder.
+        logger.log_preprocess(filename, df.duplicated().sum()) # log the file into preprocess_log file
+        print(f"File preprocessed successfully - {filename}\n")
+        
+        # preprocessLogger.log_srcToPreprocess(updated_preprocessedPath)
+       
 # path = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\data\ingestion\policies_20251017.csv'
 # df = pd.read_csv(r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\data\ingestion\policies_20251017.csv')
 # print(df.head(5))
@@ -25,31 +46,6 @@ from audit_logger import audit_logger
 # file_date = datetime.strptime(datestring,'%Y%m%d').date()
 # print(filename)                     
 # print(file_date)
-
-logger = audit_logger()
-
-class preprocessing_engine:
-    def preprocess_file(self,ingestionpath):
-        df = pd.read_csv(ingestionpath)
-        df.drop_duplicates(inplace = True)
-        filename = ingestionpath.split('\\')[-1]
-        
-        print(f"Preprocessing file - {filename}\n")
-        
-        datestring = filename.split('_')[1].split('.')[0]
-        file_date = datetime.strptime(datestring,'%Y%m%d').date()
-        system_date = date.today()
-        df['ingestion_date'] = system_date
-        df['file_date'] = file_date
-        preprocessedPath = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\data\preprocessed'
-        updated_preprocessedPath = os.path.join(preprocessedPath, filename.split('.')[0]) + '.parquet'
-        df.to_parquet(updated_preprocessedPath, index=False)
-        logger.log_preprocess(filename, df.duplicated().sum())
-        print(f"File preprocessed successfully - {filename}\n")
-        
-        # preprocessLogger.log_srcToPreprocess(updated_preprocessedPath)
-       
-
 # df = pd.read_csv(path)
 # df.drop_duplicates(inplace = True)
 # filename = path.split('\\')[-1]

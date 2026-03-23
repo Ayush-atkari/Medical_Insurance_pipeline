@@ -6,52 +6,35 @@ from datetime import date, datetime
 import pyarrow.parquet as pq
 
 class audit_logger:
-    def log_srcToPreprocess(self, preprocessedPath):
-        df = pd.read_parquet(preprocessedPath)
-        SOURCE_PATH = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\data\ingestion'
-        filename = preprocessedPath.split('.')[0]+ '.csv'
-        logs = []
-        for column in df.columns:
-            logs.append({
-                'SOURCE_LAYER':'Source',
-                'SOURCE_FILE': filename,
-                'COLUMN_NAME' : column,
-                'DATA_TYPE' : df[column].dtype,
-                'BUSINESS_LOGIC': ('date time' if column=='ingestion_date' else'File date appended to File name' if column == 'file_date' else 'Direct Mapping'),
-                'TARGET_LAYER': 'Preprocessed',
-                'TARGET_FILE': preprocessedPath,
-                'DATA_TYPE':str(df[column].dtype),
-                'LOAD_TYPE':'Truncate and Load'
-            })
-        log_df = pd.DataFrame(logs)
-        log_df.to_csv(r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\logs\STTM_srcToPreprocess.csv',mode='a',header = False , index = False)
-        
-    def log_source(self,prefix,valid_file):
-        valid_df = pd.read_json(valid_file)
+    # funtion for logging files which are avilable in control files but not in source files
+    def log_source(self,prefix,valid_file): 
+        valid_df = pd.read_json(valid_file) 
         date_string = date.today().strftime("%Y%m%d")
-
+        # create a path to store the log file
         log_src = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\logs\ingestion_log_' + date_string + '.csv'
-
+        # create dict containing file content
         data = {
             'file_name': prefix + '_' + date_string + '.csv',
             'file_date': date_string,
             'expected_rows': valid_df['expected_rows'][0],
             'actual_rows': 0,
             'status': 'Failed',
-            'ingestion_date': datetime.now()
+            'ingestion_date': datetime.now().isoformat()
         }
 
-        df = pd.DataFrame([data])
+        df = pd.DataFrame([data]) # convert dict to df
 
+        # save df as log csv file with header as false if file exists and header as true if file doesnt exists
         df.to_csv(
             log_src,
             mode='a',
             index=False,
             header=not os.path.exists(log_src)
-        )
+        ) 
     
+    # function for logging files which are being through validation pipeline
     def log_ingestion(self,filename , status, actual_rows, expected_rows):
-        datestr = datetime.now()
+        datestr = datetime.now().isoformat()
         date_string = date.today().strftime("%Y%m%d")
         dict = {
             'file_name': filename,
@@ -65,8 +48,10 @@ class audit_logger:
         log_src = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\logs\ingestion_log_'+ date_string +'.csv'
         df.to_csv(log_src, index=False , mode = 'a', header = not os.path.exists(log_src))
     
+    
+    # funtion for logging files from preprocessing pipeline
     def log_preprocess(self,filename,duplicates):
-        datestr = datetime.now()
+        datestr = datetime.now().isoformat()
         date_string = date.today().strftime("%Y%m%d")
         dict = {
             'file_name': filename,
@@ -79,16 +64,18 @@ class audit_logger:
         log_path = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\logs\preprocess_log_'+ date_string +'.csv'
         df.to_csv(log_path, index=False , mode = 'a', header = not os.path.exists(log_path))
     
+    # function for logging retention files from retention pipeline
     def log_retention(self,file_path,zip_file):
-        datestr = datetime.now()
-        date_string = da
+        datestr = datetime.now().isoformat()
+        date_string = date.today().strftime("%Y%m%d")
         dict = {
             'file_name': file_path,
             'archived_on':datestr,
             'location': zip_file
         }
         df = pd.DataFrame([dict])
-        log_retain = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\logs\retention_log_'+datestr.strftime('%Y%m%d')+'.csv'
+        log_retain = r'C:\Users\ayush\OneDrive\Desktop\python_intellibi\devInsureDataPipeline\logs\retention_log_'+date_string+'.csv'
         df.to_csv(log_retain, index = False , mode = 'a', header = not os.path.exists(log_retain))
-        
+
+   
            
